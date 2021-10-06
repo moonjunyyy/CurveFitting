@@ -213,10 +213,7 @@ int main(int argc, char* argv[])
 	}
 	fio.close();
 
-	cout << vec_X.size() << ", " << vec_Y.size() << endl << endl;
-
 	A.resize(6, 6); B.resize(6, 1);
-
 	{
 		double X_pow[11], Y_X_Pow[6];
 		for (int i = 0; i < 11; i++)  X_pow[i] = 0;
@@ -238,9 +235,10 @@ int main(int argc, char* argv[])
 		}
 	}
 
-	cout << A << endl << endl << B << endl << endl;
 	C = A.inverse() * B;
 	cout << C << endl << endl;
+	cout << "Y = " << C(0, 0) << " X^5 + " << C(1, 0) << " X^4 + " << C(2, 0) << " X^3 + "
+		 << C(3, 0) << " X^2 + " << C(4, 0) << " X^1 + " << C(5, 0) << endl;
 
 	for (int i = 0; i < vec_X.size(); i++)
 	{
