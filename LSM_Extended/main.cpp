@@ -201,7 +201,6 @@ int main(int argc, char* argv[])
 		double x, y;
 		string S;
 		fio >> S;
-		cout << S << endl;
 		if (!S.empty())
 		{
 			stringstream SS;
@@ -215,13 +214,13 @@ int main(int argc, char* argv[])
 
 	A.resize(6, 6); B.resize(6, 1);
 	{
-		double X_pow[11], Y_X_Pow[6];
-		for (int i = 0; i < 11; i++)  X_pow[i] = 0;
+		double X_pow[10], Y_X_Pow[6];
+		for (int i = 0; i < 10; i++)  X_pow[i] = 0;
 		for (int i = 0; i < 6; i++) Y_X_Pow[i] = 0;
 
 		for (int i = 0; i < vec_X.size(); i++)
 		{
-			for (int j = 0; j < 11; j++)  X_pow[j] += pow(vec_X[i], j);
+			for (int j = 0; j < 10; j++)  X_pow[j] += pow(vec_X[i], j);
 			for (int j = 0; j < 6; j++) Y_X_Pow[j] += vec_Y[i] * pow(vec_X[i], j);
 		}
 
