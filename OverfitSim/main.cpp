@@ -12,7 +12,36 @@ using namespace std;
 using namespace Eigen;
 
 MatrixXd n_Poly_LSM(int dim, vector<double> x_train, vector<double> y_train);
-double evaluateRMS(vector<double> S, vector<double> M);
+
+tuple<double, double, double>  evaluate(vector<double> S, vector<double> M)
+{
+	double RMS = 0;
+	double AME = 0;
+	double Avg = 0;
+	double TOT = 0, R2 = 0;
+
+	for (int i = 0; i < S.size(); i++)
+	{
+		Avg += S[i];
+	}
+	Avg = Avg / S.size();
+	for (int i = 0; i < S.size(); i++)
+	{
+		AME += abs(S[i] - M[i]);
+	}
+
+	for (int i = 0; i < S.size(); i++)
+	{
+		RMS += (S[i] - M[i]) * (S[i] - M[i]);
+	}
+	for (int i = 0; i < S.size(); i++)
+	{
+		TOT += (S[i] - Avg) * (S[i] - Avg);
+	}
+	R2 = 1 - (RMS / TOT);
+	RMS = sqrt(RMS);
+	return make_tuple(AME, RMS, R2);
+}
 
 void predict(MatrixXd& Model, vector<double> x_test, vector<double>& y_predict)
 {
@@ -120,6 +149,8 @@ int main(int argc, char* argv[])
 	predict(C, x_test, prediction_5th);
 	predict(C, Graphs[0], Graphs[2]);
 
+	auto E_5th = evaluate(y_test, prediction_5th);
+
 	cout << "For 3-dim" << endl << endl;
 	vector<double> prediction_3th;
 
@@ -128,6 +159,20 @@ int main(int argc, char* argv[])
 
 	predict(C, x_test, prediction_3th);
 	predict(C, Graphs[0], Graphs[3]);
+
+	auto E_3th = evaluate(y_test, prediction_3th);
+
+
+	cout << "For 7-dim" << endl << endl;
+	vector<double> prediction_7th;
+
+	C = n_Poly_LSM(7, x_train, y_train);
+	cout << C << endl << endl;
+
+	predict(C, x_test, prediction_7th);
+	predict(C, Graphs[0], Graphs[5]);
+
+	auto E_7th = evaluate(y_test, prediction_7th);
 
 	cout << "For 11-dim" << endl << endl;
 	vector<double> prediction_11th;
@@ -138,6 +183,8 @@ int main(int argc, char* argv[])
 	predict(C, x_test, prediction_11th);
 	predict(C, Graphs[0], Graphs[4]);
 
+	auto E_11th = evaluate(y_test, prediction_11th);
+
 	cout << "For 15-dim" << endl << endl;
 	vector<double> prediction_15th;
 
@@ -145,19 +192,40 @@ int main(int argc, char* argv[])
 	cout << C << endl << endl;
 
 	predict(C, x_test, prediction_15th);
-	predict(C, Graphs[0], Graphs[5]);
-	
-	cout << "RMS Error : " << endl
-	<< evaluateRMS(y_test ,prediction_3th) << ' '
-	<< evaluateRMS(y_test, prediction_5th) << ' '
-	<< evaluateRMS(y_test, prediction_11th) << ' '
-	<< evaluateRMS(y_test, prediction_15th) << ' ';
+	predict(C, Graphs[0], Graphs[4]);
+
+	auto E_15th = evaluate(y_test, prediction_15th);
+
+
+	cout << "Absolute Mean Error : "
+		<< get<0>(E_3th) << ", "
+		<< get<0>(E_5th) << ", "
+		<< get<0>(E_7th) << ", "
+		<< get<0>(E_11th) << ", "
+		<< get<0>(E_15th) << ", " << endl << endl;
+
+	cout << "Root Mean Squared Error : "
+		<< get<1>(E_3th) << ", "
+		<< get<1>(E_5th) << ", "
+		<< get<1>(E_7th) << ", "
+		<< get<1>(E_11th) << ", "
+		<< get<1>(E_15th) << ", " << endl << endl;
+
+	cout << "R2 Score : "
+		<< get<2>(E_3th) << ", "
+		<< get<2>(E_5th) << ", "
+		<< get<2>(E_7th) << ", "
+		<< get<2>(E_11th) << ", "
+		<< get<2>(E_15th) << ", " << endl << endl;
 
 	fio.open("prediction_Compare.csv", ios::out);
 	for (int i = 0; i < x_test.size(); i++)
 	{
-		fio << x_test[i] << ", " << y_test[i] << ", " << standard_prediction[i] << ", " << prediction_5th[i] << ", " << prediction_3th[i] << ", " << prediction_11th[i] << ", " << prediction_15th[i] << endl;
+		fio << x_test[i] << ", " << y_test[i] << ", " << standard_prediction[i] << ", " << prediction_5th[i] << ", " << prediction_3th[i] << ", " << prediction_7th[i] << ", " << prediction_11th[i] << ", " << prediction_15th[i] << endl;
 	}
+	fio << "AVE" << ", , , " << get<0>(E_5th) << ", " << get<0>(E_3th) << ", " << get<0>(E_7th) << ", " << get<0>(E_11th) << ", " << get<0>(E_15th) << endl;
+	fio << "RMSE" << ", , , " << get<1>(E_5th) << ", " << get<1>(E_3th) << ", " << get<1>(E_7th) << ", " << get<1>(E_11th) << ", " << get<1>(E_15th) << endl;
+	fio << "R2" << ", , , " << get<2>(E_5th) << ", " << get<2>(E_3th) << ", " << get<2>(E_7th) << ", " << get<2>(E_11th) << ", " << get<2>(E_15th) << endl;
 	fio.close();
 
 	fio.open("prediction_Graph.csv", ios::out);
@@ -197,15 +265,4 @@ MatrixXd n_Poly_LSM(int dim, vector<double> x_train, vector<double> y_train)
 		B(y, 0) = Y_X_Pow[y];
 	}
 	return A.inverse() * B;
-}
-
-double evaluateRMS(vector<double> S, vector<double> M)
-{
-	double RMS = 0;
-	for (int i = 0; i < S.size(); i++)
-	{
-		RMS = (S[i] - M[i]) * (S[i] - M[i]);
-	}
-	RMS = sqrt(RMS);
-	return RMS;
 }
